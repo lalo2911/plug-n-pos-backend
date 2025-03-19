@@ -1,0 +1,9 @@
+# Ignorar archivos de configuración
+.env
+
+# Ignorar dependencias
+node_modules/
+
+# Ignorar archivos generados
+*.log
+*.tmp
