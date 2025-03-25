@@ -13,7 +13,7 @@ router.get('/health', (req, res) => {
 });
 
 // Routes
-router.use('/products', productRoutes);
 router.use('/categories', categoryRoutes);
+router.use('/products', productRoutes);
 
 export default router;
