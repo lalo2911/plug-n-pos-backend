@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import productRoutes from './products.js';
+import userRoutes from './users.js';
 import categoryRoutes from './categories.js';
+import productRoutes from './products.js';
 import orderRoutes from './orders.js';
 
 const router = Router();
@@ -14,6 +15,7 @@ router.get('/health', (req, res) => {
 });
 
 // Routes
+router.use('/users', userRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/products', productRoutes);
 router.use('/orders', orderRoutes);
