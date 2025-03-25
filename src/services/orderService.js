@@ -1,0 +1,39 @@
+import { Order } from '../models/orderModel.js';
+
+export class OrderService {
+    async getAllOrders() {
+        return await Order.find();
+    }
+
+    async getOrderById(id) {
+        const order = await Order.findById(id);
+        if (!order) {
+            throw new Error('Order not found');
+        }
+        return order;
+    }
+
+    async createOrder(orderData) {
+        return await Order.create(orderData);
+    }
+
+    async updateOrder(id, orderData) {
+        const order = await Order.findByIdAndUpdate(
+            id,
+            orderData,
+            { new: true, runValidators: true }
+        );
+        if (!order) {
+            throw new Error('Order not found');
+        }
+        return order;
+    }
+
+    async deleteOrder(id) {
+        const order = await Order.findByIdAndDelete(id);
+        if (!order) {
+            throw new Error('Order not found');
+        }
+        return order;
+    }
+}
