@@ -3,6 +3,7 @@ import userRoutes from './users.js';
 import categoryRoutes from './categories.js';
 import productRoutes from './products.js';
 import orderRoutes from './orders.js';
+import orderDetailRoutes from './order-details.js';
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use('/users', userRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/products', productRoutes);
 router.use('/orders', orderRoutes);
+router.use('/order-details', orderDetailRoutes);
 
 export default router;
