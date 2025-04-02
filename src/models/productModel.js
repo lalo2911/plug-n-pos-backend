@@ -11,6 +11,10 @@ const productSchema = new mongoose.Schema({
         required: [true, 'Please add a price'],
         min: 0
     },
+    description: {
+        type: String,
+        trim: true
+    },
     image_url: {
         type: String,
         default: null
