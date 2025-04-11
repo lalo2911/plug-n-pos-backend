@@ -4,6 +4,7 @@ import categoryRoutes from './categories.js';
 import productRoutes from './products.js';
 import orderRoutes from './orders.js';
 import orderDetailRoutes from './order-details.js';
+import authRoutes from './auth.js';
 
 const router = Router();
 
@@ -16,6 +17,7 @@ router.get('/health', (req, res) => {
 });
 
 // Routes
+router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/products', productRoutes);
