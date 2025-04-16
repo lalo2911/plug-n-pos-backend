@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -17,10 +18,45 @@ const userSchema = new mongoose.Schema({
     },
     authSource: {
         type: String,
-        required: false,
+        enum: ['local', 'google'],
+        default: 'local'
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    avatar: {
+        type: String,
+    },
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user'
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     }
 }, {
     timestamps: true
 });
+
+// Encriptar contraseña antes de guardar
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password') || !this.password) {
+        return next();
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
+
+// Método para comparar contraseñas
+userSchema.methods.matchPassword = async function (enteredPassword) {
+    if (!this.password) return false;
+    return await bcrypt.compare(enteredPassword, this.password);
+};
 
 export const User = mongoose.model('User', userSchema);
