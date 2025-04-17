@@ -51,7 +51,7 @@ export class UserController {
     async completeSetup(req, res, next) {
         try {
             const userId = req.user._id;
-            const { role } = req.body;
+            const { role, businessName } = req.body;
 
             if (!role) {
                 return res.status(400).json({
@@ -60,8 +60,39 @@ export class UserController {
                 });
             }
 
-            const user = await userService.completeUserSetup(userId, role);
+            // Si es owner, puede proporcionar un nombre de negocio
+            // Si es empleado, no necesita nombre de negocio
+            const user = await userService.completeUserSetup(userId, role, businessName);
             res.json({ success: true, data: user });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async joinBusinessWithCode(req, res, next) {
+        try {
+            const userId = req.user._id;
+            const { inviteCode } = req.body;
+
+            if (!inviteCode) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El código de invitación es requerido'
+                });
+            }
+
+            const user = await userService.joinBusinessWithCode(userId, inviteCode);
+            res.json({ success: true, data: user });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getUsersByBusiness(req, res, next) {
+        try {
+            const { businessId } = req.params;
+            const users = await userService.getUsersByBusiness(businessId);
+            res.json({ success: true, data: users });
         } catch (error) {
             next(error);
         }

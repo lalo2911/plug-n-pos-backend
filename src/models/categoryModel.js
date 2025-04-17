@@ -5,6 +5,11 @@ const categorySchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please add a name'],
         trim: true
+    },
+    business: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Business',
+        required: true
     }
 }, {
     timestamps: true
