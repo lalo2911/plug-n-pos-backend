@@ -29,10 +29,14 @@ const userSchema = new mongoose.Schema({
     avatar: {
         type: String,
     },
+    hasCompletedSetup: {
+        type: Boolean,
+        default: false
+    },
     role: {
         type: String,
-        enum: ['user', 'admin'],
-        default: 'user'
+        enum: ['employee', 'owner'],
+        default: 'employee'
     },
     isActive: {
         type: Boolean,
