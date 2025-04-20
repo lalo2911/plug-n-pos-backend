@@ -5,6 +5,10 @@ export class OrderDetailService {
         return await OrderDetail.find();
     }
 
+    async getOrderDetailsByBusiness(businessId) {
+        return await OrderDetail.find({ business: businessId });
+    }
+
     async getOrderDetailById(id) {
         const orderDetail = await OrderDetail.findById(id);
         if (!orderDetail) {
