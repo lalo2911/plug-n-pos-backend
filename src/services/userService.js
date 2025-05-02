@@ -134,8 +134,12 @@ export class UserService {
         return user;
     }
 
-    // Obtener todos los usuarios por negocio
-    async getUsersByBusiness(businessId) {
-        return await User.find({ business: businessId }).select('-password');
+    // Obtener todos los empleados por negocio
+    async getEmployeesByBusiness(businessId) {
+        return await User.find({
+            business: businessId,
+            // role: 'employee',
+            isActive: true
+        }).select('-password');
     }
 }

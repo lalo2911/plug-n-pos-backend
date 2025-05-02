@@ -88,10 +88,20 @@ export class UserController {
         }
     }
 
-    async getUsersByBusiness(req, res, next) {
+    async getEmployeesByBusiness(req, res, next) {
         try {
-            const { businessId } = req.params;
-            const users = await userService.getUsersByBusiness(businessId);
+            // Obtener el negocio del usuario
+            const businessId = req.user.business;
+
+            // Verificar que el usuario tenga un negocio asociado
+            if (!businessId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No tienes un negocio asociado'
+                });
+            }
+
+            const users = await userService.getEmployeesByBusiness(businessId);
             res.json({ success: true, data: users });
         } catch (error) {
             next(error);
