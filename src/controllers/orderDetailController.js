@@ -23,6 +23,27 @@ export class OrderDetailController {
         }
     }
 
+    async getOrderDetailsByOrder(req, res, next) {
+        try {
+            // Obtener el negocio del usuario
+            const businessId = req.user.business;
+            const orderId = req.params.id;
+
+            // Verificar que el usuario tenga un negocio asociado
+            if (!businessId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No tienes un negocio asociado'
+                });
+            }
+
+            const orderDetails = await orderDetailService.getOrderDetailsByOrderId(orderId);
+            res.json({ success: true, data: orderDetails });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async getOrderDetail(req, res, next) {
         try {
             const orderDetail = await orderDetailService.getOrderDetailById(req.params.id);
