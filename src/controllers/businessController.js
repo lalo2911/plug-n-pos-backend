@@ -43,7 +43,7 @@ export class BusinessController {
 
     async generateInviteCode(req, res, next) {
         try {
-            const userId = req.user._id;
+            // const userId = req.user._id;
             const user = await req.user;
 
             if (!user.business) {
