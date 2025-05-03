@@ -6,6 +6,7 @@ import orderRoutes from './orders.js';
 import orderDetailRoutes from './order-details.js';
 import authRoutes from './auth.js';
 import businessRoutes from './business.js';
+import metricRoutes from './metrics.js';
 
 const router = Router();
 
@@ -25,5 +26,6 @@ router.use('/products', productRoutes);
 router.use('/orders', orderRoutes);
 router.use('/order-details', orderDetailRoutes);
 router.use('/business', businessRoutes);
+router.use('/metrics', metricRoutes);
 
 export default router;
