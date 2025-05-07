@@ -4,7 +4,6 @@ import { Product } from '../models/productModel.js';
 import { Category } from '../models/categoryModel.js';
 import { User } from '../models/userModel.js';
 import { Metric } from '../models/metricModel.js';
-import mongoose from 'mongoose';
 
 export class MetricService {
     // Obtener resumen general de métricas
@@ -19,9 +18,6 @@ export class MetricService {
             const lastMonthDate = new Date(today);
             lastMonthDate.setMonth(today.getMonth() - 1);
 
-            // Convertir businessId a ObjectId
-            const businessObjectId = new mongoose.Types.ObjectId(businessId);
-
             // Obtener métricas de ventas
             const [
                 todaySales,
@@ -35,16 +31,16 @@ export class MetricService {
                 salesByCategory,
                 salesTrend
             ] = await Promise.all([
-                this.getTotalSales(businessObjectId, today, new Date()),
-                this.getTotalSales(businessObjectId, lastWeekDate, new Date()),
-                this.getTotalSales(businessObjectId, lastMonthDate, new Date()),
-                this.getTotalSales(businessObjectId, null, null),
-                Product.countDocuments({ business: businessObjectId }),
-                Category.countDocuments({ business: businessObjectId }),
-                User.countDocuments({ business: businessObjectId, role: 'employee' }),
-                this.getTopSellingProducts(businessObjectId, lastMonthDate, new Date(), 5),
-                this.getSalesByCategory(businessObjectId, lastMonthDate, new Date()),
-                this.getSalesTrend(businessObjectId)
+                this.getTotalSales(businessId, today, new Date()),
+                this.getTotalSales(businessId, lastWeekDate, new Date()),
+                this.getTotalSales(businessId, lastMonthDate, new Date()),
+                this.getTotalSales(businessId, null, null),
+                Product.countDocuments({ business: businessId }),
+                Category.countDocuments({ business: businessId }),
+                User.countDocuments({ business: businessId, role: 'employee' }),
+                this.getTopSellingProducts(businessId, lastMonthDate, new Date(), 5),
+                this.getSalesByCategory(businessId, lastMonthDate, new Date()),
+                this.getSalesTrend(businessId)
             ]);
 
             return {

@@ -16,19 +16,3 @@ connectDB().then(() => {
         setupCronJobs();
     });
 });
-
-// Manejar el cierre de la aplicación (Ctrl + C, etc.)
-process.on('SIGINT', () => {
-    mongoose.connection.close(() => {
-        console.log('Conexión a MongoDB cerrada por SIGINT');
-        process.exit(0);
-    });
-});
-
-// Manejar cierre en entornos como Docker o procesos en producción donde el sistema termina el proceso
-process.on('SIGTERM', () => {
-    mongoose.connection.close(() => {
-        console.log('Conexión a MongoDB cerrada por SIGTERM');
-        process.exit(0);
-    });
-});
