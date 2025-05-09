@@ -325,8 +325,18 @@ export class MetricService {
                     $match: match
                 },
                 {
+                    $addFields: {
+                        localHour: {
+                            $hour: {
+                                date: "$createdAt",
+                                timezone: "America/Mexico_City"
+                            }
+                        }
+                    }
+                },
+                {
                     $group: {
-                        _id: { $hour: "$createdAt" },
+                        _id: "$localHour",
                         totalSales: { $sum: { $toDouble: "$total" } },
                         orderCount: { $sum: 1 }
                     }
