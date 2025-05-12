@@ -272,7 +272,11 @@ export class MetricService {
                 {
                     $group: {
                         _id: {
-                            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+                            $dateTrunc: {
+                                date: "$createdAt",
+                                unit: "day",
+                                timezone: "America/Mexico_City"
+                            }
                         },
                         totalSales: { $sum: { $toDouble: "$total" } },
                         orderCount: { $sum: 1 }
@@ -288,14 +292,30 @@ export class MetricService {
             for (let i = 0; i < days; i++) {
                 const currentDate = new Date(startDate);
                 currentDate.setDate(startDate.getDate() + i);
-                const dateStr = currentDate.toISOString().split('T')[0];
-                salesMap[dateStr] = { date: dateStr, totalSales: 0, orderCount: 0 };
+
+                // Convertir a medianoche en México (luego en UTC se verá como 06:00:00Z)
+                const localizedDate = new Date(
+                    new Intl.DateTimeFormat("en-US", {
+                        timeZone: "America/Mexico_City",
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                    }).format(currentDate)
+                );
+
+                const dateKey = localizedDate.toISOString();
+                salesMap[dateKey] = {
+                    date: dateKey,
+                    totalSales: 0,
+                    orderCount: 0
+                };
             }
 
             // Llenar con los datos reales
             results.forEach(item => {
-                salesMap[item._id] = {
-                    date: item._id,
+                const dateKey = new Date(item._id).toISOString();
+                salesMap[dateKey] = {
+                    date: dateKey,
                     totalSales: item.totalSales,
                     orderCount: item.orderCount
                 };
