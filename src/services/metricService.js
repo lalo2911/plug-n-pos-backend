@@ -334,10 +334,29 @@ export class MetricService {
         try {
             const match = { business: businessId };
 
+            // Si se proporcionan fechas, debemos ajustarlas a la zona horaria de Mexico City
             if (startDate && endDate) {
-                match.createdAt = {
-                    $gte: startDate,
-                    $lte: endDate
+                match.$expr = {
+                    $and: [
+                        {
+                            $eq: [
+                                {
+                                    $dateToString: {
+                                        date: "$createdAt",
+                                        format: "%Y-%m-%d",
+                                        timezone: "America/Mexico_City"
+                                    }
+                                },
+                                {
+                                    $dateToString: {
+                                        date: new Date(startDate),
+                                        format: "%Y-%m-%d",
+                                        timezone: "America/Mexico_City"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
                 };
             }
 
@@ -347,7 +366,14 @@ export class MetricService {
                 },
                 {
                     $addFields: {
-                        localHour: {
+                        dateMX: {
+                            $dateToString: {
+                                date: "$createdAt",
+                                format: "%Y-%m-%d",
+                                timezone: "America/Mexico_City"
+                            }
+                        },
+                        hourOfDay: {
                             $hour: {
                                 date: "$createdAt",
                                 timezone: "America/Mexico_City"
@@ -357,7 +383,7 @@ export class MetricService {
                 },
                 {
                     $group: {
-                        _id: "$localHour",
+                        _id: "$hourOfDay",
                         totalSales: { $sum: { $toDouble: "$total" } },
                         orderCount: { $sum: 1 }
                     }
@@ -368,14 +394,14 @@ export class MetricService {
                 {
                     $project: {
                         hour: "$_id",
-                        totalSales: 1,
+                        totalSales: { $round: ["$totalSales", 2] },
                         orderCount: 1,
                         _id: 0
                     }
                 }
             ]);
 
-            // Asegurar que tenemos datos para todas las horas
+            // Asegurar que tenemos datos para todas las horas (0-23)
             const hourlyData = Array(24).fill().map((_, hour) => {
                 const found = results.find(item => item.hour === hour);
                 return found || { hour, totalSales: 0, orderCount: 0 };

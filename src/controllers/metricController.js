@@ -150,13 +150,20 @@ export class MetricController {
             let start = null;
             let end = null;
 
-            if (startDate) {
-                start = new Date(startDate);
-            }
+            // Si no se proporcionan fechas, usar el día actual en zona horaria Mexico City
+            if (!startDate && !endDate) {
+                const today = new Date();
 
-            if (endDate) {
-                end = new Date(endDate);
-                end.setHours(23, 59, 59, 999);
+                start = today;
+                end = today;
+            } else {
+                if (startDate) {
+                    start = new Date(startDate);
+                }
+
+                if (endDate) {
+                    end = new Date(endDate);
+                }
             }
 
             const hourlyData = await metricService.getSalesByHourOfDay(businessId, start, end);
