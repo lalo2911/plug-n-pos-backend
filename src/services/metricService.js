@@ -473,7 +473,12 @@ export class MetricService {
                 },
                 {
                     $group: {
-                        _id: { $dayOfWeek: "$createdAt" }, // 1 = domingo, 2 = lunes, ...
+                        _id: {
+                            $dayOfWeek: {
+                                date: "$createdAt",
+                                timezone: "America/Mexico_City"
+                            }
+                        },
                         totalSales: { $sum: { $toDouble: "$total" } },
                         orderCount: { $sum: 1 }
                     }
@@ -485,8 +490,8 @@ export class MetricService {
 
             // Nombres de días
             const dayNames = [
-                'Domingo', 'Lunes', 'Martes', 'Miércoles',
-                'Jueves', 'Viernes', 'Sábado'
+                'Domingo', 'Lunes', 'Martes',
+                'Miércoles', 'Jueves', 'Viernes', 'Sábado'
             ];
 
             // Asegurar que tenemos datos para todos los días
