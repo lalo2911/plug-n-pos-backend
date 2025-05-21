@@ -78,7 +78,13 @@ export class AuthController {
 
                 // Redirigir a frontend con token JWT
                 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-                res.redirect(`${frontendUrl}/login/success?token=${userData.token}`);
+                res.cookie('auth_token', userData.token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'Strict',
+                    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 días
+                });
+                res.redirect(`${frontendUrl}/login/success`);
             } catch (error) {
                 next(error);
             }

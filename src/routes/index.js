@@ -8,7 +8,11 @@ import authRoutes from './auth.js';
 import businessRoutes from './business.js';
 import metricRoutes from './metrics.js';
 
+import { apiLimiter } from '../middlewares/rateLimiters.js';
+
 const router = Router();
+
+router.use(apiLimiter);
 
 // Test route
 router.get('/health', (req, res) => {

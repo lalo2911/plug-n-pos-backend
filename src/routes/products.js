@@ -1,14 +1,15 @@
 import { Router } from 'express';
 import { ProductController } from '../controllers/productController.js';
 import { protect, isOwner, isAllowedUser } from '../middlewares/authMiddleware.js';
+import { writeLimiter } from '../middlewares/rateLimiters.js';
 
 const router = Router();
 const productController = new ProductController();
 
-router.post('/', protect, isOwner, productController.createProduct);
+router.post('/', protect, isOwner, writeLimiter, productController.createProduct);
 router.get('/', protect, isAllowedUser, productController.getProducts);
 router.get('/:id', protect, isAllowedUser, productController.getProduct);
-router.put('/:id', protect, isOwner, productController.updateProduct);
-router.delete('/:id', protect, isOwner, productController.deleteProduct);
+router.put('/:id', protect, isOwner, writeLimiter, productController.updateProduct);
+router.delete('/:id', protect, isOwner, writeLimiter, productController.deleteProduct);
 
 export default router;
