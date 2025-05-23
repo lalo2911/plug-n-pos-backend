@@ -24,6 +24,11 @@ const orderDetailSchema = new mongoose.Schema({
         type: mongoose.Types.Decimal128,
         required: [true, 'Please add a subtotal'],
         min: 0
+    },
+    business: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Business',
+        required: true
     }
 }, {
     timestamps: true

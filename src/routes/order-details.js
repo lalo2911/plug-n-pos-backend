@@ -11,4 +11,7 @@ router.get('/:id', protect, isAllowedUser, orderDetailController.getOrderDetail)
 router.put('/:id', protect, isAllowedUser, orderDetailController.updateOrderDetail);
 router.delete('/:id', protect, isOwner, orderDetailController.deleteOrderDetail);
 
+// Obtener todos los detalles de ordenes (productos) de una orden especifica
+router.get('/order/:id', protect, isAllowedUser, orderDetailController.getOrderDetailsByOrder);
+
 export default router;

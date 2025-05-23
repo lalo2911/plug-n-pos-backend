@@ -38,7 +38,10 @@ export class AuthService {
             role: user.role,
             authSource: user.authSource,
             avatar: user.avatar,
-            token: generateToken(user._id)
+            token: generateToken(user._id),
+            hasCompletedSetup: user.hasCompletedSetup,
+            isActive: user.isActive,
+            business: user.business
         };
     }
 

@@ -5,6 +5,14 @@ export class OrderDetailService {
         return await OrderDetail.find();
     }
 
+    async getOrderDetailsByBusiness(businessId) {
+        return await OrderDetail.find({ business: businessId });
+    }
+
+    async getOrderDetailsByOrderId(orderId) {
+        return await OrderDetail.find({ order_id: orderId });
+    }
+
     async getOrderDetailById(id) {
         const orderDetail = await OrderDetail.findById(id);
         if (!orderDetail) {
@@ -13,8 +21,8 @@ export class OrderDetailService {
         return orderDetail;
     }
 
-    async createOrderDetail(orderDetailData) {
-        return await OrderDetail.create(orderDetailData);
+    async createOrderDetail(orderDetailData, options = {}) {
+        return await OrderDetail.create([orderDetailData], options).then(details => details[0]);
     }
 
     async updateOrderDetail(id, orderDetailData) {

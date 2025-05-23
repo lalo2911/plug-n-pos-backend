@@ -5,6 +5,10 @@ export class CategoryService {
         return await Category.find();
     }
 
+    async getCategoriesByBusiness(businessId) {
+        return await Category.find({ business: businessId });
+    }
+
     async getCategoryById(id) {
         const category = await Category.findById(id);
         if (!category) {

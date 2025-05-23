@@ -5,6 +5,10 @@ export class OrderService {
         return await Order.find();
     }
 
+    async getOrdersByBusiness(businessId) {
+        return await Order.find({ business: businessId });
+    }
+
     async getOrderById(id) {
         const order = await Order.findById(id);
         if (!order) {
@@ -13,8 +17,8 @@ export class OrderService {
         return order;
     }
 
-    async createOrder(orderData) {
-        return await Order.create(orderData);
+    async createOrder(orderData, options = {}) {
+        return await Order.create([orderData], options).then(orders => orders[0]);
     }
 
     async updateOrder(id, orderData) {
