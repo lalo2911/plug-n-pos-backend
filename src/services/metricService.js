@@ -272,7 +272,11 @@ export class MetricService {
                 {
                     $group: {
                         _id: {
-                            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+                            $dateTrunc: {
+                                date: "$createdAt",
+                                unit: "day",
+                                timezone: "America/Mexico_City"
+                            }
                         },
                         totalSales: { $sum: { $toDouble: "$total" } },
                         orderCount: { $sum: 1 }
@@ -288,14 +292,30 @@ export class MetricService {
             for (let i = 0; i < days; i++) {
                 const currentDate = new Date(startDate);
                 currentDate.setDate(startDate.getDate() + i);
-                const dateStr = currentDate.toISOString().split('T')[0];
-                salesMap[dateStr] = { date: dateStr, totalSales: 0, orderCount: 0 };
+
+                // Convertir a medianoche en México (luego en UTC se verá como 06:00:00Z)
+                const localizedDate = new Date(
+                    new Intl.DateTimeFormat("en-US", {
+                        timeZone: "America/Mexico_City",
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                    }).format(currentDate)
+                );
+
+                const dateKey = localizedDate.toISOString();
+                salesMap[dateKey] = {
+                    date: dateKey,
+                    totalSales: 0,
+                    orderCount: 0
+                };
             }
 
             // Llenar con los datos reales
             results.forEach(item => {
-                salesMap[item._id] = {
-                    date: item._id,
+                const dateKey = new Date(item._id).toISOString();
+                salesMap[dateKey] = {
+                    date: dateKey,
                     totalSales: item.totalSales,
                     orderCount: item.orderCount
                 };
@@ -314,10 +334,29 @@ export class MetricService {
         try {
             const match = { business: businessId };
 
+            // Si se proporcionan fechas, debemos ajustarlas a la zona horaria de Mexico City
             if (startDate && endDate) {
-                match.createdAt = {
-                    $gte: startDate,
-                    $lte: endDate
+                match.$expr = {
+                    $and: [
+                        {
+                            $eq: [
+                                {
+                                    $dateToString: {
+                                        date: "$createdAt",
+                                        format: "%Y-%m-%d",
+                                        timezone: "America/Mexico_City"
+                                    }
+                                },
+                                {
+                                    $dateToString: {
+                                        date: new Date(startDate),
+                                        format: "%Y-%m-%d",
+                                        timezone: "America/Mexico_City"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
                 };
             }
 
@@ -327,7 +366,14 @@ export class MetricService {
                 },
                 {
                     $addFields: {
-                        localHour: {
+                        dateMX: {
+                            $dateToString: {
+                                date: "$createdAt",
+                                format: "%Y-%m-%d",
+                                timezone: "America/Mexico_City"
+                            }
+                        },
+                        hourOfDay: {
                             $hour: {
                                 date: "$createdAt",
                                 timezone: "America/Mexico_City"
@@ -337,7 +383,7 @@ export class MetricService {
                 },
                 {
                     $group: {
-                        _id: "$localHour",
+                        _id: "$hourOfDay",
                         totalSales: { $sum: { $toDouble: "$total" } },
                         orderCount: { $sum: 1 }
                     }
@@ -348,14 +394,14 @@ export class MetricService {
                 {
                     $project: {
                         hour: "$_id",
-                        totalSales: 1,
+                        totalSales: { $round: ["$totalSales", 2] },
                         orderCount: 1,
                         _id: 0
                     }
                 }
             ]);
 
-            // Asegurar que tenemos datos para todas las horas
+            // Asegurar que tenemos datos para todas las horas (0-23)
             const hourlyData = Array(24).fill().map((_, hour) => {
                 const found = results.find(item => item.hour === hour);
                 return found || { hour, totalSales: 0, orderCount: 0 };
@@ -453,7 +499,12 @@ export class MetricService {
                 },
                 {
                     $group: {
-                        _id: { $dayOfWeek: "$createdAt" }, // 1 = domingo, 2 = lunes, ...
+                        _id: {
+                            $dayOfWeek: {
+                                date: "$createdAt",
+                                timezone: "America/Mexico_City"
+                            }
+                        },
                         totalSales: { $sum: { $toDouble: "$total" } },
                         orderCount: { $sum: 1 }
                     }
@@ -465,8 +516,8 @@ export class MetricService {
 
             // Nombres de días
             const dayNames = [
-                'Domingo', 'Lunes', 'Martes', 'Miércoles',
-                'Jueves', 'Viernes', 'Sábado'
+                'Domingo', 'Lunes', 'Martes',
+                'Miércoles', 'Jueves', 'Viernes', 'Sábado'
             ];
 
             // Asegurar que tenemos datos para todos los días
