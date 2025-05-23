@@ -13,7 +13,7 @@ export const protect = async (req, res, next) => {
         if (!token) {
             return res.status(401).json({
                 success: false,
-                message: 'Not authorized, no token'
+                message: 'Not authorized'
             });
         }
 
@@ -47,13 +47,39 @@ export const protect = async (req, res, next) => {
     }
 };
 
-export const isAdmin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
+export const isOwner = (req, res, next) => {
+    if (req.user && req.user.role === 'owner') {
         next();
     } else {
         res.status(403).json({
             success: false,
-            message: 'Not authorized as an admin'
+            message: 'No autorizado. Se requiere rol de propietario'
         });
     }
+};
+
+// Middleware para verificar que el usuario sea un empleado o un propietario
+export const isAllowedUser = (req, res, next) => {
+    if (req.user && (req.user.role === 'employee' || req.user.role === 'owner')) {
+        next();
+    } else {
+        res.status(403).json({
+            success: false,
+            message: 'No autorizado. Se requiere rol de empleado o propietario'
+        });
+    }
+};
+
+// Middleware para verificar roles específicos
+export const checkRole = (roles) => {
+    return (req, res, next) => {
+        if (req.user && roles.includes(req.user.role)) {
+            next();
+        } else {
+            res.status(403).json({
+                success: false,
+                message: `No autorizado. Se requiere uno de los siguientes roles: ${roles.join(', ')}`
+            });
+        }
+    };
 };

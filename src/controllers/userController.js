@@ -47,4 +47,23 @@ export class UserController {
             next(error);
         }
     }
+
+    async completeSetup(req, res, next) {
+        try {
+            const userId = req.user._id;
+            const { role } = req.body;
+
+            if (!role) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El rol es requerido'
+                });
+            }
+
+            const user = await userService.completeUserSetup(userId, role);
+            res.json({ success: true, data: user });
+        } catch (error) {
+            next(error);
+        }
+    }
 }
