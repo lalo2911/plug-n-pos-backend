@@ -25,7 +25,7 @@ const apiLimiter = rateLimit({
 const authLimiter = rateLimit({
     ...commonOptions,
     windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 5, // 5 intentos por IP en 15 minutos
+    max: 8, // 8 intentos por IP en 15 minutos
     message: 'Demasiados intentos. Por favor, intenta de nuevo en 15 minutos.',
 });
 
@@ -33,7 +33,7 @@ const authLimiter = rateLimit({
 const writeLimiter = rateLimit({
     ...commonOptions,
     windowMs: 30 * 60 * 1000, // 30 minutos
-    max: 50, // 50 solicitudes por IP en 30 minutos
+    max: 75, // 75 solicitudes por IP en 30 minutos
     message: 'Demasiadas solicitudes de escritura. Por favor, espera y vuelve a intentar.',
 });
 
@@ -41,7 +41,7 @@ const writeLimiter = rateLimit({
 const metricLimiter = rateLimit({
     ...commonOptions,
     windowMs: 5 * 60 * 1000, // 5 minutos
-    max: 10, // 10 solicitudes por IP en 5 minutos
+    max: 25, // 25 solicitudes por IP en 5 minutos
     message: 'Demasiadas solicitudes de métricas. Por favor, espera y vuelve a intentar.',
 });
 
