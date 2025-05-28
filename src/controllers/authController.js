@@ -4,16 +4,31 @@ import { AuthService } from '../services/authService.js';
 const authService = new AuthService();
 
 export class AuthController {
-    async register(req, res, next) {
+    register = async (req, res, next) => {
         try {
-            const user = await authService.register(req.body);
-            res.status(201).json({ success: true, data: user });
+            const deviceInfo = {
+                userAgent: req.get('User-Agent'),
+                ip: req.ip
+            };
+
+            const result = await authService.register(req.body);
+
+            // Configurar cookie HttpOnly para refresh token
+            this.setRefreshTokenCookie(res, result.refreshToken);
+
+            res.status(201).json({
+                success: true,
+                data: {
+                    user: result.user,
+                    accessToken: result.accessToken
+                }
+            });
         } catch (error) {
             next(error);
         }
     }
 
-    login(req, res, next) {
+    login = (req, res, next) => {
         passport.authenticate('local', async (err, user, info) => {
             try {
                 if (err) {
@@ -27,12 +42,104 @@ export class AuthController {
                     });
                 }
 
-                const userData = await authService.login(req.body.email, req.body.password);
-                res.json({ success: true, data: userData });
+                const deviceInfo = {
+                    userAgent: req.get('User-Agent'),
+                    ip: req.ip
+                };
+
+                const result = await authService.login(req.body.email, req.body.password, deviceInfo);
+
+                // Configurar cookie HttpOnly para refresh token
+                this.setRefreshTokenCookie(res, result.refreshToken);
+
+                res.json({
+                    success: true,
+                    data: {
+                        user: result.user,
+                        accessToken: result.accessToken
+                    }
+                });
             } catch (error) {
                 next(error);
             }
         })(req, res, next);
+    }
+
+    refreshToken = async (req, res, next) => {
+        try {
+            const refreshToken = req.cookies.refreshToken;
+
+            if (!refreshToken) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Refresh token not found'
+                });
+            }
+
+            const result = await authService.refreshToken(refreshToken);
+
+            // Configurar nueva cookie HttpOnly para el nuevo refresh token
+            this.setRefreshTokenCookie(res, result.refreshToken);
+
+            res.json({
+                success: true,
+                data: {
+                    user: result.user,
+                    accessToken: result.accessToken
+                }
+            });
+        } catch (error) {
+            res.status(401).json({
+                success: false,
+                message: 'Invalid refresh token'
+            });
+        }
+    }
+
+    async logout(req, res, next) {
+        try {
+            const refreshToken = req.cookies.refreshToken;
+
+            if (refreshToken) {
+                await authService.logout(refreshToken);
+            }
+
+            // Limpiar cookie de refresh token
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/'
+            });
+
+            res.json({
+                success: true,
+                message: 'Logged out successfully'
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async logoutAllDevices(req, res, next) {
+        try {
+            await authService.logoutAllDevices(req.user._id);
+
+            // Limpiar cookie de refresh token
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/'
+            });
+
+            res.json({
+                success: true,
+                message: 'Logged out from all devices successfully'
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
     async getProfile(req, res, next) {
@@ -54,13 +161,13 @@ export class AuthController {
     }
 
     // Rutas de Google OAuth
-    googleAuth(req, res, next) {
+    googleAuth = (req, res, next) => {
         passport.authenticate('google', {
             scope: ['profile', 'email']
         })(req, res, next);
     }
 
-    googleAuthCallback(req, res, next) {
+    googleAuthCallback = (req, res, next) => {
         passport.authenticate('google', { session: false }, async (err, user) => {
             try {
                 if (err) {
@@ -74,14 +181,33 @@ export class AuthController {
                     });
                 }
 
-                const userData = await authService.googleAuthCallback(user);
+                const deviceInfo = {
+                    userAgent: req.get('User-Agent'),
+                    ip: req.ip
+                };
 
-                // Redirigir a frontend con token JWT
+                const result = await authService.googleAuthCallback(user, deviceInfo);
+
+                // Configurar cookie HttpOnly para refresh token
+                this.setRefreshTokenCookie(res, result.refreshToken);
+
+                // Redirigir a frontend con access token en URL (temporal)
                 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-                res.redirect(`${frontendUrl}/login/success?token=${userData.token}`);
+                res.redirect(`${frontendUrl}/login/success?token=${result.accessToken}`);
             } catch (error) {
                 next(error);
             }
         })(req, res, next);
+    }
+
+    // Método auxiliar para configurar cookie de refresh token
+    setRefreshTokenCookie(res, refreshToken) {
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+            path: '/'
+        });
     }
 }

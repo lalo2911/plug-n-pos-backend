@@ -1,48 +1,135 @@
 import { User } from '../models/userModel.js';
-import { generateToken } from '../utils/jwtUtils.js';
+import { RefreshToken } from '../models/refreshTokenModel.js';
+import { generateAccessToken, generateRefreshToken } from '../utils/jwtUtils.js';
 
 export class AuthService {
     async register(userData) {
-        // Check if user already exists
         const userExists = await User.findOne({ email: userData.email });
 
         if (userExists) {
             throw new Error('User already exists');
         }
 
-        // Create user with authSource as 'local'
         userData.authSource = 'local';
         const user = await User.create(userData);
 
+        // Generar tokens
+        const accessToken = generateAccessToken(user._id);
+        const refreshToken = await this.createRefreshToken(user._id);
+
         return {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            authSource: user.authSource,
-            token: generateToken(user._id)
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                authSource: user.authSource
+            },
+            accessToken,
+            refreshToken
         };
     }
 
-    async login(email, password) {
+    async login(email, password, deviceInfo = {}) {
         const user = await User.findOne({ email });
 
         if (!user || !(await user.matchPassword(password))) {
             throw new Error('Invalid email or password');
         }
 
+        // Generar tokens
+        const accessToken = generateAccessToken(user._id);
+        const refreshToken = await this.createRefreshToken(user._id, deviceInfo);
+
         return {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            authSource: user.authSource,
-            avatar: user.avatar,
-            token: generateToken(user._id),
-            hasCompletedSetup: user.hasCompletedSetup,
-            isActive: user.isActive,
-            business: user.business
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                authSource: user.authSource,
+                avatar: user.avatar,
+                hasCompletedSetup: user.hasCompletedSetup,
+                isActive: user.isActive,
+                business: user.business
+            },
+            accessToken,
+            refreshToken
         };
+    }
+
+    async refreshToken(refreshTokenValue) {
+        const refreshTokenDoc = await RefreshToken.findOne({
+            token: refreshTokenValue,
+            isRevoked: false,
+            expiresAt: { $gt: new Date() }
+        }).populate('userId');
+
+        if (!refreshTokenDoc) {
+            throw new Error('Invalid or expired refresh token');
+        }
+
+        const user = refreshTokenDoc.userId;
+        if (!user || !user.isActive) {
+            throw new Error('User not found or inactive');
+        }
+
+        // Generar nuevo access token
+        const newAccessToken = generateAccessToken(user._id);
+
+        // Opcionalmente generar nuevo refresh token (rotación)
+        const newRefreshToken = await this.createRefreshToken(user._id);
+
+        // Revocar el refresh token anterior
+        refreshTokenDoc.isRevoked = true;
+        await refreshTokenDoc.save();
+
+        return {
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                authSource: user.authSource,
+                avatar: user.avatar,
+                hasCompletedSetup: user.hasCompletedSetup,
+                isActive: user.isActive,
+                business: user.business
+            },
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken
+        };
+    }
+
+    async logout(refreshTokenValue) {
+        if (refreshTokenValue) {
+            await RefreshToken.updateOne(
+                { token: refreshTokenValue },
+                { isRevoked: true }
+            );
+        }
+    }
+
+    async logoutAllDevices(userId) {
+        await RefreshToken.updateMany(
+            { userId, isRevoked: false },
+            { isRevoked: true }
+        );
+    }
+
+    async createRefreshToken(userId, deviceInfo = {}) {
+        const token = generateRefreshToken();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); // 7 días
+
+        await RefreshToken.create({
+            token,
+            userId,
+            expiresAt,
+            deviceInfo
+        });
+
+        return token;
     }
 
     async getUserProfile(userId) {
@@ -77,20 +164,25 @@ export class AuthService {
             email: updatedUser.email,
             role: updatedUser.role,
             authSource: updatedUser.authSource,
-            avatar: updatedUser.avatar,
-            token: generateToken(updatedUser._id)
+            avatar: updatedUser.avatar
         };
     }
 
-    async googleAuthCallback(user) {
+    async googleAuthCallback(user, deviceInfo = {}) {
+        const accessToken = generateAccessToken(user._id);
+        const refreshToken = await this.createRefreshToken(user._id, deviceInfo);
+
         return {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            authSource: user.authSource,
-            avatar: user.avatar,
-            token: generateToken(user._id)
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                authSource: user.authSource,
+                avatar: user.avatar
+            },
+            accessToken,
+            refreshToken
         };
     }
 }

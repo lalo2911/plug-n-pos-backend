@@ -1,10 +1,11 @@
 import cron from 'node-cron';
 import { MetricService } from '../services/metricService.js';
+import { RefreshToken } from '../models/refreshTokenModel.js'; // Importa el modelo de RefreshToken
 
 // Configuración de tareas programadas
 export const setupCronJobs = () => {
-    // Ejecutar a las 2 AM todos los días (cuando la carga del sistema es menor)
-    cron.schedule('0 2 * * *', async () => {
+    // Tarea 1: Cálculo de métricas diarias
+    cron.schedule('0 2 * * *', async () => { // Ejecutar a las 2 AM todos los días
         console.log('Ejecutando tarea programada: Cálculo de métricas diarias');
         try {
             await MetricService.storeDailyMetrics();
@@ -15,5 +16,26 @@ export const setupCronJobs = () => {
     }, {
         scheduled: true,
         timezone: "America/Mexico_City" // Ajusta a tu zona horaria
+    });
+
+    // Tarea 2: Limpieza de tokens revocados antiguos
+    cron.schedule('0 0 * * *', async () => { // Ejecutar cada día a medianoche
+        console.log('Ejecutando tarea programada: Limpieza de tokens revocados');
+        try {
+            const threeDaysAgo = new Date();
+            threeDaysAgo.setDate(threeDaysAgo.getDate() - 3); // Resta 3 días
+
+            const result = await RefreshToken.deleteMany({
+                isRevoked: true,
+                updatedAt: { $lt: threeDaysAgo }
+            });
+
+            console.log(`Se limpiaron ${result.deletedCount} tokens de refresco revocados.`);
+        } catch (error) {
+            console.error('Error al limpiar los tokens de refresco:', error);
+        }
+    }, {
+        scheduled: true,
+        timezone: "America/Mexico_City" // Asegúrate de que la zona horaria coincida si es relevante
     });
 };
