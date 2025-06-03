@@ -179,7 +179,10 @@ export class AuthService {
                 email: user.email,
                 role: user.role,
                 authSource: user.authSource,
-                avatar: user.avatar
+                avatar: user.avatar,
+                hasCompletedSetup: user.hasCompletedSetup,
+                isActive: user.isActive,
+                business: user.business
             },
             accessToken,
             refreshToken

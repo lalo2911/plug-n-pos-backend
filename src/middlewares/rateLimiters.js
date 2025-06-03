@@ -25,7 +25,7 @@ const apiLimiter = rateLimit({
 const authLimiter = rateLimit({
     ...commonOptions,
     windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 8, // 8 intentos por IP en 15 minutos
+    max: 9, // 9 intentos por IP en 15 minutos
     message: 'Demasiados intentos. Por favor, intenta de nuevo en 15 minutos.',
 });
 

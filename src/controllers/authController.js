@@ -1,4 +1,5 @@
 import passport from 'passport';
+import crypto from 'crypto';
 import { AuthService } from '../services/authService.js';
 
 const authService = new AuthService();
@@ -171,14 +172,13 @@ export class AuthController {
         passport.authenticate('google', { session: false }, async (err, user) => {
             try {
                 if (err) {
-                    return next(err);
+                    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                    return res.redirect(`${frontendUrl}/login?error=server_error`);
                 }
 
                 if (!user) {
-                    return res.status(401).json({
-                        success: false,
-                        message: 'Google authentication failed'
-                    });
+                    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                    return res.redirect(`${frontendUrl}/login?error=auth_failed`);
                 }
 
                 const deviceInfo = {
@@ -191,16 +191,107 @@ export class AuthController {
                 // Configurar cookie HttpOnly para refresh token
                 this.setRefreshTokenCookie(res, result.refreshToken);
 
-                // Redirigir a frontend con access token en URL (temporal)
+                // Almacenar temporalmente el access token en memoria del servidor
+                // y redirigir con un código de autorización temporal
+                const tempAuthCode = this.generateTempAuthCode();
+                this.storeTempAuthData(tempAuthCode, {
+                    user: result.user,
+                    accessToken: result.accessToken
+                });
+
                 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-                res.redirect(`${frontendUrl}/login/success?token=${result.accessToken}`);
+                res.redirect(`${frontendUrl}/login/success?code=${tempAuthCode}`);
             } catch (error) {
                 next(error);
             }
         })(req, res, next);
     }
 
-    // Método auxiliar para configurar cookie de refresh token
+    // Intercambiar el código temporal por los datos de autenticación
+    exchangeAuthCode = async (req, res, next) => {
+        try {
+            const { code } = req.body;
+
+            if (!code) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Authorization code required'
+                });
+            }
+
+            const authData = this.getTempAuthData(code);
+
+            if (!authData) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid or expired authorization code'
+                });
+            }
+
+            // Eliminar el código temporal después de usarlo
+            this.deleteTempAuthData(code);
+
+            res.json({
+                success: true,
+                data: authData
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Auxiliares para manejar códigos temporales
+    generateTempAuthCode() {
+        return crypto.randomBytes(32).toString('hex');
+    }
+
+    storeTempAuthData = (code, data) => {
+        // Almacenar en memoria con expiración de 5 minutos
+        if (!global.tempAuthStore) {
+            global.tempAuthStore = new Map();
+        }
+
+        global.tempAuthStore.set(code, {
+            data,
+            expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutos
+        });
+
+        // Limpiar códigos expirados
+        this.cleanExpiredAuthCodes();
+    }
+
+    getTempAuthData(code) {
+        if (!global.tempAuthStore) return null;
+
+        const entry = global.tempAuthStore.get(code);
+        if (!entry) return null;
+
+        if (Date.now() > entry.expiresAt) {
+            global.tempAuthStore.delete(code);
+            return null;
+        }
+
+        return entry.data;
+    }
+
+    deleteTempAuthData(code) {
+        if (global.tempAuthStore) {
+            global.tempAuthStore.delete(code);
+        }
+    }
+
+    cleanExpiredAuthCodes() {
+        if (!global.tempAuthStore) return;
+
+        const now = Date.now();
+        for (const [code, entry] of global.tempAuthStore.entries()) {
+            if (now > entry.expiresAt) {
+                global.tempAuthStore.delete(code);
+            }
+        }
+    }
+
+    // Configurar cookie de refresh token
     setRefreshTokenCookie(res, refreshToken) {
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,

@@ -11,6 +11,7 @@ router.post('/login', authLimiter, authController.login);
 router.post('/refresh', authController.refreshToken);
 router.post('/logout', authController.logout);
 router.post('/logout-all', protect, authController.logoutAllDevices);
+router.post('/exchange-code', authLimiter, authController.exchangeAuthCode);
 router.get('/profile', protect, isAllowedUser, authController.getProfile);
 router.put('/profile', protect, isAllowedUser, writeLimiter, authController.updateProfile);
 
