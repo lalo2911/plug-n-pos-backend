@@ -3,11 +3,11 @@ import { Business } from '../models/businessModel.js';
 
 export class UserService {
     async getAllUsers() {
-        return await User.find().select('-password');
+        return await User.find().select('-password -googleId');
     }
 
     async getUserById(id) {
-        const user = await User.findById(id).select('-password');
+        const user = await User.findById(id).select('-password -googleId');
         if (!user) {
             throw new Error('User not found');
         }
@@ -37,7 +37,7 @@ export class UserService {
             id,
             updateData,
             { new: true, runValidators: true }
-        ).select('-password');
+        ).select('-password -googleId');
 
         if (!user) {
             throw new Error('User not found');
@@ -82,7 +82,7 @@ export class UserService {
             id,
             updateData,
             { new: true, runValidators: true }
-        ).select('-password');
+        ).select('-password -googleId');
 
         if (!user) {
             throw new Error('User not found');
@@ -125,7 +125,7 @@ export class UserService {
                 hasCompletedSetup: true
             },
             { new: true, runValidators: true }
-        ).select('-password');
+        ).select('-password -googleId');
 
         if (!user) {
             throw new Error('User not found');
@@ -140,6 +140,6 @@ export class UserService {
             business: businessId,
             // role: 'employee',
             isActive: true
-        }).select('-password');
+        }).select('-password -googleId');
     }
 }
