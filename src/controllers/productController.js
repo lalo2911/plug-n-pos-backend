@@ -1,4 +1,5 @@
 import { ProductService } from '../services/productService.js';
+import { deleteImage } from '../config/cloudinary.js';
 
 const productService = new ProductService();
 
@@ -54,9 +55,23 @@ export class ProductController {
                 });
             }
 
+            // Si se subió una imagen, agregar la URL
+            if (req.file) {
+                req.body.image_url = req.file.path;
+                req.body.image_public_id = req.file.filename; // Para poder eliminarla después
+            }
+
             const product = await productService.createProduct(req.body);
             res.status(201).json({ success: true, data: product });
         } catch (error) {
+            // Si hay error y se subió una imagen, eliminarla de Cloudinary
+            if (req.file) {
+                try {
+                    await deleteImage(req.file.filename);
+                } catch (deleteError) {
+                    console.error('Error al eliminar imagen después de error:', deleteError);
+                }
+            }
             next(error);
         }
     }
@@ -73,9 +88,41 @@ export class ProductController {
                 });
             }
 
+            let oldImagePublicId = null;
+
+            // Si se subió una nueva imagen
+            if (req.file) {
+                // Guardar el ID de la imagen anterior para eliminarla después
+                if (product.image_public_id) {
+                    oldImagePublicId = product.image_public_id;
+                }
+
+                req.body.image_url = req.file.path;
+                req.body.image_public_id = req.file.filename;
+            }
+
             const updatedProduct = await productService.updateProduct(req.params.id, req.body);
+
+            // Si se actualizó la imagen exitosamente, eliminar la anterior
+            if (oldImagePublicId && req.file) {
+                try {
+                    await deleteImage(oldImagePublicId);
+                } catch (deleteError) {
+                    console.error('Error al eliminar imagen anterior:', deleteError);
+                    // No fallar la actualización por este error
+                }
+            }
+
             res.json({ success: true, data: updatedProduct });
         } catch (error) {
+            // Si hay error y se subió una nueva imagen, eliminarla
+            if (req.file) {
+                try {
+                    await deleteImage(req.file.filename);
+                } catch (deleteError) {
+                    console.error('Error al eliminar imagen después de error:', deleteError);
+                }
+            }
             next(error);
         }
     }
@@ -93,6 +140,17 @@ export class ProductController {
             }
 
             const deletedProduct = await productService.deleteProduct(req.params.id);
+
+            // Eliminar la imagen de Cloudinary si existe
+            if (deletedProduct.image_public_id) {
+                try {
+                    await deleteImage(deletedProduct.image_public_id);
+                } catch (deleteError) {
+                    console.error('Error al eliminar imagen:', deleteError);
+                    // No fallar la eliminación del producto por este error
+                }
+            }
+
             res.json({ success: true, data: deletedProduct });
         } catch (error) {
             next(error);

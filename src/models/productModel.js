@@ -19,6 +19,10 @@ const productSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    image_public_id: {
+        type: String,
+        default: null // Para poder eliminar la imagen de Cloudinary
+    },
     category_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
