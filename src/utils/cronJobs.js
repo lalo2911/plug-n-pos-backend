@@ -22,12 +22,12 @@ export const setupCronJobs = () => {
     cron.schedule('0 0 * * *', async () => { // Ejecutar cada día a medianoche
         console.log('Ejecutando tarea programada: Limpieza de tokens revocados');
         try {
-            const threeDaysAgo = new Date();
-            threeDaysAgo.setDate(threeDaysAgo.getDate() - 3); // Resta 3 días
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Establece la fecha al inicio del día de hoy (00:00:00)
 
             const result = await RefreshToken.deleteMany({
                 isRevoked: true,
-                updatedAt: { $lt: threeDaysAgo }
+                updatedAt: { $lt: today }
             });
 
             console.log(`Se limpiaron ${result.deletedCount} tokens de refresco revocados.`);
