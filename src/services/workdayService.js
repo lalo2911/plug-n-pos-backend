@@ -146,7 +146,7 @@ export class WorkdayService {
 
     // Get workday status for all employees in a business
     async getAllEmployeesWorkdayStatus(businessId) {
-        const employees = await User.find({ business: businessId }).select('_id name email avatar role');
+        const employees = await User.find({ business: businessId }).select('_id name email avatar role createdAt');
 
         // Get workday status for each employee
         const workdayPromises = employees.map(async employee => {

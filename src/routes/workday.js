@@ -12,4 +12,7 @@ router.post('/end', protect, isOwner, writeLimiter, workdayController.endWorkday
 router.get('/status', protect, workdayController.getWorkdayStatus);
 router.get('/employees', protect, isOwner, workdayController.getAllEmployeesWorkdayStatus);
 
+// Nueva ruta SSE para streaming de estado de workday
+router.get('/stream', workdayController.streamWorkdayStatus);
+
 export default router;
