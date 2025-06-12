@@ -153,6 +153,19 @@ export class AuthService {
         user.email = userData.email || user.email;
 
         if (userData.password) {
+            if (!userData.currentPassword) {
+                const error = new Error('Debes ingresar tu contraseña actual para cambiarla');
+                error.status = 400;
+                throw error;
+            }
+
+            const isMatch = await user.matchPassword(userData.currentPassword);
+            if (!isMatch) {
+                const error = new Error('La contraseña actual es incorrecta');
+                error.status = 401;
+                throw error;
+            }
+
             user.password = userData.password;
         }
 
