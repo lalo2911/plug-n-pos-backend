@@ -147,9 +147,6 @@ export class MetricService {
                     $sort: { totalRevenue: -1 }
                 },
                 {
-                    $limit: limit
-                },
-                {
                     $lookup: {
                         from: 'products',
                         localField: '_id',
@@ -168,6 +165,9 @@ export class MetricService {
                         totalRevenue: 1,
                         price: { $toDouble: '$productInfo.price' }
                     }
+                },
+                {
+                    $limit: limit
                 }
             ]);
 
