@@ -5,14 +5,14 @@ import { Business } from '../models/businessModel.js';
 
 // Configuración de tareas programadas
 export const setupCronJobs = () => {
-    // Tarea 1: Cálculo de métricas diarias
-    cron.schedule('0 2 * * *', async () => { // Ejecutar a las 2 AM todos los días
-        console.log('Ejecutando tarea programada: Cálculo de métricas diarias');
+    // Tarea 1: Cálculo de métricas semanales
+    cron.schedule('0 2 * * 1', async () => { // Ejecutar a las 2 AM cada lunes
+        console.log('Ejecutando tarea programada: Cálculo de métricas semanales');
         try {
             await MetricService.storeDailyMetrics();
-            console.log('Métricas diarias calculadas y almacenadas correctamente');
+            console.log('Métricas semanales calculadas y almacenadas correctamente');
         } catch (error) {
-            console.error('Error al ejecutar el cálculo de métricas diarias:', error);
+            console.error('Error al ejecutar el cálculo de métricas semanales:', error);
         }
     }, {
         scheduled: true,
