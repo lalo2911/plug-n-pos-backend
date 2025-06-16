@@ -133,7 +133,7 @@ export class AuthService {
     }
 
     async getUserProfile(userId) {
-        const user = await User.findById(userId).select('-password');
+        const user = await User.findById(userId).select('-password -googleId');
 
         if (!user) {
             throw new Error('User not found');

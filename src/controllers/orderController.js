@@ -5,7 +5,6 @@ import mongoose from 'mongoose';
 const orderService = new OrderService();
 const orderDetailService = new OrderDetailService();
 
-
 export class OrderController {
     async getOrders(req, res, next) {
         try {
