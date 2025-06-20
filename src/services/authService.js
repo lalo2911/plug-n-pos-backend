@@ -1,6 +1,7 @@
 import { User } from '../models/userModel.js';
 import { RefreshToken } from '../models/refreshTokenModel.js';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwtUtils.js';
+import wasCreatedRecently from '../utils/dateUtils.js';
 
 export class AuthService {
     async register(userData) {
@@ -59,17 +60,17 @@ export class AuthService {
     }
 
     async refreshToken(refreshTokenValue) {
-        const refreshTokenDoc = await RefreshToken.findOne({
+        const oldRefreshToken = await RefreshToken.findOne({
             token: refreshTokenValue,
             isRevoked: false,
             expiresAt: { $gt: new Date() }
         }).populate('userId');
 
-        if (!refreshTokenDoc) {
+        if (!oldRefreshToken) {
             throw new Error('Invalid or expired refresh token');
         }
 
-        const user = refreshTokenDoc.userId;
+        const user = oldRefreshToken.userId;
         if (!user || !user.isActive) {
             throw new Error('User not found or inactive');
         }
@@ -77,12 +78,21 @@ export class AuthService {
         // Generar nuevo access token
         const newAccessToken = generateAccessToken(user._id);
 
-        // Opcionalmente generar nuevo refresh token (rotación)
-        const newRefreshToken = await this.createRefreshToken(user._id);
+        let newRefreshTokenValue;
+        const threshold = parseInt(process.env.REFRESH_ROTATION_THRESHOLD_MINUTES || '60');
 
-        // Revocar el refresh token anterior
-        refreshTokenDoc.isRevoked = true;
-        await refreshTokenDoc.save();
+        // Semirrotación: solo si el token es viejo se rota
+        if (wasCreatedRecently(oldRefreshToken.createdAt, threshold)) {
+            // Se reutiliza
+            newRefreshTokenValue = oldRefreshToken.token;
+        } else {
+            // Se rota
+            oldRefreshToken.isRevoked = true;
+            await oldRefreshToken.save();
+
+            const newRefreshToken = await this.createRefreshToken(user._id);
+            newRefreshTokenValue = newRefreshToken.token;
+        }
 
         return {
             user: {
@@ -97,7 +107,7 @@ export class AuthService {
                 business: user.business
             },
             accessToken: newAccessToken,
-            refreshToken: newRefreshToken
+            refreshToken: newRefreshTokenValue
         };
     }
 
@@ -153,6 +163,19 @@ export class AuthService {
         user.email = userData.email || user.email;
 
         if (userData.password) {
+            if (!userData.currentPassword) {
+                const error = new Error('Debes ingresar tu contraseña actual para cambiarla');
+                error.status = 400;
+                throw error;
+            }
+
+            const isMatch = await user.matchPassword(userData.currentPassword);
+            if (!isMatch) {
+                const error = new Error('La contraseña actual es incorrecta');
+                error.status = 401;
+                throw error;
+            }
+
             user.password = userData.password;
         }
 

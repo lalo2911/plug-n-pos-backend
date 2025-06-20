@@ -26,8 +26,7 @@ const businessSchema = new mongoose.Schema({
         },
         createdAt: {
             type: Date,
-            default: Date.now,
-            expires: '7d' // Expiración automática después de 7 días
+            default: Date.now
         }
     }],
     address: {
