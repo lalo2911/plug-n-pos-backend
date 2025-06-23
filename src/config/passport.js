@@ -42,7 +42,7 @@ passport.use(new GoogleStrategy(
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: `${process.env.API_URL}/api/v1/auth/google/callback`
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (profile, done) => {
         try {
             // Verificar si el usuario ya existe con este googleId
             let user = await User.findOne({ googleId: profile.id });
