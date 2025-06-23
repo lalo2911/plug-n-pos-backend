@@ -42,12 +42,13 @@ passport.use(new GoogleStrategy(
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: `${process.env.API_URL}/api/v1/auth/google/callback`
     },
-    async (profile, done) => {
+    async (accessToken, refreshToken, profile, done) => {
         try {
-            const email = profile.emails?.[0]?.value;
+            const emailObj = profile.emails?.find(e => e.verified === true);
+            const email = emailObj?.value;
 
             if (!email) {
-                return done(new Error('No email found in Google profile'));
+                return done(new Error('No verified email found in Google profile'));
             }
 
             // Buscar usuario por email
