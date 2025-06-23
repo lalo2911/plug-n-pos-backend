@@ -298,7 +298,7 @@ export class AuthController {
             secure: true,
             sameSite: 'none',
             path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días
+            maxAge: 6 * 60 * 60 * 1000 // 6 horas
         });
     }
 }
