@@ -16,12 +16,12 @@ const router = Router();
 router.use(apiLimiter);
 
 // Test route
-router.get('/health', (req, res) => {
-  res.json({
-    status: 200,
-    message: 'API is running'
-  });
-});
+// router.get('/health', (req, res) => {
+//   res.json({
+//     status: 200,
+//     message: 'API is running'
+//   });
+// });
 
 // Routes
 router.use('/auth', authRoutes);

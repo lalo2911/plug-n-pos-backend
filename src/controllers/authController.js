@@ -251,13 +251,19 @@ export class AuthController {
             global.tempAuthStore = new Map();
         }
 
+        const ttlMs = 5 * 60 * 1000; // 5 minutos
+
         global.tempAuthStore.set(code, {
             data,
-            expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutos
+            expiresAt: Date.now() + ttlMs
         });
 
-        // Limpiar códigos expirados
-        this.cleanExpiredAuthCodes();
+        // Auto-eliminar después del TTL (seguro contra fugas de memoria pequeñas)
+        setTimeout(() => {
+            if (global.tempAuthStore) {
+                global.tempAuthStore.delete(code);
+            }
+        }, ttlMs);
     }
 
     getTempAuthData(code) {
@@ -277,17 +283,6 @@ export class AuthController {
     deleteTempAuthData(code) {
         if (global.tempAuthStore) {
             global.tempAuthStore.delete(code);
-        }
-    }
-
-    cleanExpiredAuthCodes() {
-        if (!global.tempAuthStore) return;
-
-        const now = Date.now();
-        for (const [code, entry] of global.tempAuthStore.entries()) {
-            if (now > entry.expiresAt) {
-                global.tempAuthStore.delete(code);
-            }
         }
     }
 
