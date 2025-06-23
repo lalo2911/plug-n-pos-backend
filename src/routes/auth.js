@@ -11,7 +11,7 @@ const authController = new AuthController();
 router.post('/register', authLimiter, validateRegister, validateRequest, authController.register);
 router.post('/login', authLimiter, validateLogin, validateRequest, authController.login);
 router.post('/refresh', authController.refreshToken);
-router.post('/logout', authController.logout);
+router.post('/logout', protect, authController.logout);
 router.post('/logout-all', protect, authController.logoutAllDevices);
 router.post('/exchange-code', authLimiter, validateExchangeCode, validateRequest, authController.exchangeAuthCode);
 router.get('/profile', protect, isAllowedUser, authController.getProfile);

@@ -40,11 +40,11 @@ export const upload = multer({
         fileSize: 5 * 1024 * 1024, // 5MB máximo
     },
     fileFilter: (req, file, cb) => {
-        // Verificar que sea una imagen
-        if (file.mimetype.startsWith('image/')) {
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (allowedMimeTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Solo se permiten archivos de imagen'), false);
+            cb(new Error('Formato de imagen no permitido'), false);
         }
     }
 });

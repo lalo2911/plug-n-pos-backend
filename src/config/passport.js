@@ -44,22 +44,21 @@ passport.use(new GoogleStrategy(
     },
     async (accessToken, refreshToken, profile, done) => {
         try {
-            // Verificar si el usuario ya existe con este googleId
-            let user = await User.findOne({ googleId: profile.id });
+            const emailObj = profile.emails?.find(e => e.verified === true);
+            const email = emailObj?.value;
 
-            if (user) {
-                return done(null, user);
+            if (!email) {
+                return done(new Error('No verified email found in Google profile'));
             }
 
-            // Verificar si el email ya está registrado
-            user = await User.findOne({ email: profile.emails[0].value });
+            // Buscar usuario por email
+            let user = await User.findOne({ email });
 
             if (user) {
-                // Actualizar el usuario existente con datos de Google
-                user.googleId = profile.id;
+                // Actualizar datos opcionales
                 user.authSource = 'google';
                 if (!user.name) user.name = profile.displayName;
-                if (!user.avatar && profile.photos && profile.photos.length > 0) {
+                if (!user.avatar && profile.photos?.length > 0) {
                     user.avatar = profile.photos[0].value;
                 }
                 await user.save();
@@ -69,10 +68,9 @@ passport.use(new GoogleStrategy(
             // Crear un nuevo usuario con datos de Google
             const newUser = await User.create({
                 name: profile.displayName,
-                email: profile.emails[0].value,
-                googleId: profile.id,
+                email,
                 authSource: 'google',
-                avatar: profile.photos && profile.photos.length > 0 ? profile.photos[0].value : undefined
+                avatar: profile.photos?.[0]?.value
             });
 
             return done(null, newUser);

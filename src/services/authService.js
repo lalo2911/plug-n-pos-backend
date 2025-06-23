@@ -130,7 +130,7 @@ export class AuthService {
     async createRefreshToken(userId, deviceInfo = {}) {
         const token = generateRefreshToken();
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7); // 7 días
+        expiresAt.setDate(expiresAt.getDate() + (6 * 60 * 60 * 1000)); // 6 horas
 
         await RefreshToken.create({
             token,
@@ -143,7 +143,7 @@ export class AuthService {
     }
 
     async getUserProfile(userId) {
-        const user = await User.findById(userId).select('-password -googleId');
+        const user = await User.findById(userId).select('-password');
 
         if (!user) {
             throw new Error('User not found');

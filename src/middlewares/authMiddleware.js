@@ -29,7 +29,7 @@ export const protect = async (req, res, next) => {
         }
 
         // Obtener usuario del token
-        req.user = await User.findById(decoded.id).select('-password -googleId');
+        req.user = await User.findById(decoded.id).select('-password');
 
         if (!req.user || !req.user.isActive) {
             return res.status(401).json({

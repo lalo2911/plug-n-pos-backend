@@ -148,7 +148,7 @@ export class WorkdayController {
             const decoded = verifyAccessToken(token);
 
             // Obtener usuario del token
-            req.user = await User.findById(decoded.id).select('-password -googleId');
+            req.user = await User.findById(decoded.id).select('-password');
 
             const businessId = req.user.business;
             const userId = req.user._id;
