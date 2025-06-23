@@ -6,7 +6,7 @@ import { writeLimiter } from '../middlewares/rateLimiters.js';
 const router = Router();
 const userController = new UserController();
 
-router.post('/', writeLimiter, userController.createUser);
+router.post('/', protect, writeLimiter, userController.createUser);
 router.get('/', protect, userController.getUsers);
 
 // Obtener empleados por negocio
