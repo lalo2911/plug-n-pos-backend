@@ -5,6 +5,10 @@ export class ProductService {
         return await Product.find();
     }
 
+    async getProductsByBusiness(businessId) {
+        return await Product.find({ business: businessId });
+    }
+
     async getProductById(id) {
         const product = await Product.findById(id);
         if (!product) {
