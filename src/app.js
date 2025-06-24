@@ -9,6 +9,9 @@ import routes from './routes/index.js';
 
 const app = express();
 
+// Configurar trust proxy para Render
+app.set('trust proxy', 1);
+
 const corsOptions = {
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
